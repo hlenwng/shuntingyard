@@ -40,4 +40,7 @@ void Node::setLeft(Node* nLeft) {
 
 Node* Node::getLeft() {
   return left;
+
+
+  
 }

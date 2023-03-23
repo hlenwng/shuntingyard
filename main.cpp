@@ -2,6 +2,13 @@
 #include <cstring>
 #include "node.h"
 
+/*
+  Name: Helen Wang
+  Date: March 17, 2023
+  Program: Create an expression tree to read in a mathematical expression.
+  Entered as infix notation, can be outputted as a prefix, postfix or infix.
+ */
+
 using namespace std;
 
 Node* stackHead = NULL;
@@ -9,22 +16,17 @@ Node* queueHead = NULL;
 
 void enqueue(Node* current, char data);
 void dequeue(Node* current, Node* &head);
-void push(Node* current, char data);
+void push(Node* current, Node* data);
 Node* peek(Node* current);
 void pop(Node* current);
 void buildTree(Node* current);
 void infix(Node* current);
 void prefix(Node* current);
 void postfix(Node* current);
+bool isOperator(char op);
 
 int main() {
   char input[20];
-  char tchar;
-  char mchar;
-  
-  for(int i = 0; i < 20; i++) {
-    input[i] = 'e';
-  }
   
   cout << "symbols: '+' '-' '*' '/' '^' '()'" << endl;
   cout << "only single-digit integers" << endl;
@@ -37,9 +39,9 @@ int main() {
 
     if(!isspace(input[i])) {
       if (isdigit(input[i])) {
-	//cout << tchar << ": it is a number" << endl;
 	//numbers go straight to queue
-	enqueue(queueHead, tchar);
+	enqueue(queueHead, input[i]);
+	//cout << queueHead->getCharacter() << endl;
       }
 
       else if (input[i] == ')') {
@@ -57,19 +59,20 @@ int main() {
 	  pop(stackHead);
 	}
       }
-      
-      else if (isdigit(input[i]) == false && input[i] != ')') {
+
+      //move ( to stack
+      else if (!isdigit(input[i]) && input[i] != ')') {
+	//cout << "hi" << endl;
 	Node* temp = new Node(input[i]);
-	push(temp, stackHead->getCharacter());
+	push(stackHead, temp);
       }	
     }
-  }
-
-
-  /*
+    //cout << "helen" << endl;
+  }  
   
   //cars have been moved
   //binary expression tree
+
   while(stackHead != NULL) {
     if(peek(stackHead)->getCharacter() != '(' ) {
       enqueue(queueHead, peek(stackHead)->getCharacter());
@@ -80,19 +83,25 @@ int main() {
   //print postfix
   cout << "postfix: " << endl;
   Node* current = queueHead;
-  while(current != NULL) {
+  
+  while(current!= NULL) {  
     cout << current->getCharacter() << " ";
     current = current->getNext();
   }
 
+  cout << endl;
+
+  //build expression tree
   while(queueHead != NULL) {
+    //cout << "work" << endl;
     buildTree(queueHead);
     dequeue(queueHead, queueHead);
   }
 
-  /*
+  
   bool playing = true;
   while(playing == true) {
+    
     char output[10];
     cout << "Print 'infix', 'prefix', 'postfix' or 'quit'"<< endl;
     cin.get(output, 10, '\n');
@@ -117,8 +126,8 @@ int main() {
       cout << "please enter a valid command" << endl;
     }
   }
-  */
-// return 0;
+  
+ return 0;
 }
 
 void enqueue(Node* current, char data) {
@@ -142,9 +151,9 @@ void enqueue(Node* current, char data) {
 
 void dequeue(Node* current, Node* &head) {
   //Remove front node
-  if (current == NULL) {
-    cout << "Nothing in queue" << endl;
-    return;
+  if (current->getNext() == NULL) {
+    queueHead = NULL;
+    delete current;
   }
 
   else if (current->getNext() != NULL) {
@@ -155,12 +164,12 @@ void dequeue(Node* current, Node* &head) {
   }
 }
 
-void push(Node* current, char data) {
+void push(Node* current, Node* data) {
   //Push value of new character into list
   
   //If list is empty
   if (current == NULL) {
-    stackHead = new Node(data);
+    stackHead = data;
   }
 
   //If id is smaller than head
@@ -168,8 +177,8 @@ void push(Node* current, char data) {
     while(current->getNext() != NULL) {
       current = current->getNext();
     }
-    Node* temp = new Node(data);
-    current->setNext(temp);
+    //Node* temp = new Node(data);
+    current->setNext(data);
   }
 }
 
@@ -200,66 +209,76 @@ void pop(Node* current) {
   }
 }
 
-/*
 void buildTree(Node* current) {
   //add all numbers to stack
   if(isdigit(current->getCharacter())) {
-    Node* no = new Node(current->getCharacter());
-    push(stackHead, no->getCharacter());
+    Node* now = new Node(current->getCharacter());
+    push(stackHead, now);
   }
 
   else if(!isdigit(current->getCharacter())) {
     //in stack, set left and right nodes as top nodes
-    Node* no = new Node(current->getCharacter());
+    Node* now = new Node(current->getCharacter());
     //create new node for left and right
     Node* nRight = new Node(peek(stackHead)->getCharacter());
     nRight->setRight(peek(stackHead)->getRight());
     nRight->setLeft(peek(stackHead)->getLeft());
-    no->setRight(nRight);
+    now->setRight(nRight);
     pop(stackHead);
     
     Node* nLeft = new Node(peek(stackHead)->getCharacter());
     nLeft->setRight(peek(stackHead)->getRight());
     nLeft->setLeft(peek(stackHead)->getLeft());
-    no->setLeft(nLeft);
+    now->setLeft(nLeft);
     pop(stackHead);
 
-    push(stackHead, no->getCharacter());
+    push(stackHead, now);
   }
 }
 
 void infix(Node* current) {
-  if(current->getLeft() != NULL) {
-    cout << "(";
+  //print original expression
+  if(current != NULL) {
+    if (isOperator(current->getCharacter()) == true) {
+      cout << '(' << " ";
+    }
     infix(current->getLeft());
-  }
-
-  cout << current->getCharacter() << " ";
-  if(current->getRight() != NULL) {
+    cout << current->getCharacter() << " ";
     infix(current->getRight());
-    cout << ")";
+    if(isOperator(current->getCharacter()) == true) {
+      cout << ')';
+    }
   }
 }
 
 void postfix(Node* current) {
-  if (current->getLeft() != NULL) {
-    postfix(current->getLeft());
+  //print operations after numbers 
+  if (current != NULL) {
+    if(current->getLeft() != NULL) {
+      postfix(current->getLeft());
+    }
+    if (current->getRight() != NULL) {
+      postfix(current->getRight());
+    }
+    cout << current->getCharacter() << " ";
   }
-  if(current->getRight() != NULL) {
-    postfix(current->getRight());
-  }
-
-  //print leaf nodes
-  cout << current->getCharacter() << " ";
 }
 
 void prefix(Node* current) {
-  cout << current->getCharacter() << " ";
-  if(current->getLeft() != NULL) {
+  //print numbers after operations
+  if (current != NULL) {
+    cout << current->getCharacter() << " ";
     prefix(current->getLeft());
-  }
-  if (current->getRight() != NULL) {
     prefix(current->getRight());
   }
 }
-*/
+
+//check to see if character is an operation
+bool isOperator(char op){
+  if(op == '^' || op == '*' || op == '/' || op == '+' ||
+     op == '-') {
+    return true;
+  } else {
+    return false;
+  }
+}
