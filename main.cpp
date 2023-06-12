@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cstring>
-#include "node.h"
 
 /*
   Name: Helen Wang
@@ -11,11 +10,55 @@
 
 using namespace std;
 
+class Node {
+private:
+  char data;
+  Node* next;
+  Node* left;
+  Node* right;
+  
+public:
+  Node(char value) {
+    data = value;
+    next = nullptr;
+    left = nullptr;
+    right = nullptr;
+  }
+  
+  char getData() {
+    return data;
+  }
+  
+  Node* getNext() {
+    return next;
+  }
+  
+  void setNext(Node* node) {
+    next = node;
+  }
+  
+  Node* getLeft() {
+    return left;
+  }
+  
+  void setLeft(Node* node) {
+    left = node;
+  }
+  
+  Node* getRight() {
+    return right;
+  }
+  
+  void setRight(Node* node) {
+    right = node;
+  }
+};
+  
 Node* stackHead = NULL;
 Node* queueHead = NULL;
 
 void enqueue(Node* current, char data);
-void dequeue(Node* current, Node* &head);
+void dequeue(Node* current, Node*& head);
 void push(Node* current, Node* data);
 Node* peek(Node* current);
 void pop(Node* current);
@@ -26,13 +69,14 @@ void postfix(Node* current);
 bool isOperator(char op);
 
 int main() {
-  char input[20];
+  char input[30];
+  
   
   cout << "symbols: '+' '-' '*' '/' '^' '()'" << endl;
   cout << "only single-digit integers" << endl;
   cout << "Please enter an expression (with a space between each #): ";
 
-  cin.get(input, 20, '\n');
+  cin.get(input, 30, '\n');
   cin.ignore();
 
   for (int i = 0; i < strlen(input); i++) {
@@ -46,37 +90,40 @@ int main() {
 
       else if (input[i] == ')') {
 
-        //look at stack, move top value until you see a (                                    
-        //delete both parenthesis                                                            
-        //keep going until all ( and ) are removed                                           
-
-        //look at stack, move top value until you see a (                                    
-        while (peek(stackHead)->getCharacter() != '(' ) {
-          enqueue(queueHead, peek(stackHead)->getCharacter());
+        //look at stack, move top value until you see a (                             //delete both parenthesis                                                            //keep going until all ( and ) are removed                            //look at stack, move top value until you see a (                                    
+        while (peek(stackHead)->getData() != '(' ) {
+          enqueue(queueHead, peek(stackHead)->getData());
           pop(stackHead);
         }
-	if(peek(stackHead)->getCharacter() == '(') {
+	if(peek(stackHead)->getData() == '(') {
 	  pop(stackHead);
 	}
       }
 
+      else if (!isdigit(input[i]) && input[i] != '(') {
+	//Move operators from stack to queue if precedence is higher
+	  Node* temp = new Node(input[i]);
+	  push(stackHead, temp);
+      }
+      
+      /*
       //move ( to stack
-      else if (!isdigit(input[i]) && input[i] != ')') {
+      else if (!isdigit(input[i]) && input[i] != '(') {
 	//cout << "hi" << endl;
 	Node* temp = new Node(input[i]);
-	push(stackHead, temp);
-      }	
+	push(temp);
+	}	*/
     }
     //cout << "helen" << endl;
   }  
-  
+    
   //cars have been moved
   //binary expression tree
 
-  while(stackHead != NULL) {
-    if(peek(stackHead)->getCharacter() != '(' ) {
-      enqueue(queueHead, peek(stackHead)->getCharacter());
-    }
+    while(stackHead != NULL) {
+      if(peek(stackHead)->getData() != '(') {
+	enqueue(queueHead, peek(stackHead)->getData());
+      }
     pop(stackHead);
   }
 
@@ -85,18 +132,20 @@ int main() {
   Node* current = queueHead;
   
   while(current!= NULL) {  
-    cout << current->getCharacter() << " ";
+    cout << current->getData() << " ";
     current = current->getNext();
   }
 
   cout << endl;
 
+  
   //build expression tree
   while(queueHead != NULL) {
     //cout << "work" << endl;
     buildTree(queueHead);
     dequeue(queueHead, queueHead);
-  }
+    }
+
 
   
   bool playing = true;
@@ -117,6 +166,7 @@ int main() {
     }
     else if(strcmp("postfix", output) == false) {
       postfix(stackHead);
+      //postfix(root);
       cout << endl;
     }
     else if (strcmp("quit", output) == false) {
@@ -126,42 +176,47 @@ int main() {
       cout << "please enter a valid command" << endl;
     }
   }
+
+  //clean up memory
+  while(stackHead != NULL) {
+    pop(stackHead);
+  }
+
+  while(queueHead != NULL) {
+    dequeue(queueHead, queueHead);
+  }
   
  return 0;
 }
 
-void enqueue(Node* current, char data) {
+  void enqueue(Node* current, char data) {
   //Adds element to the end of the queue
     
-  if(current == NULL) {
-    queueHead = new Node(data);
-  }
+ if (current == nullptr) {
+        queueHead = new Node(data);
+    } else {
+        // Find end
+        while (current->getNext() != nullptr) {
+            current = current->getNext();
+        }
 
-  else if (current != NULL) {
-
-    //find end
-    while(current->getNext() != NULL) {
-      current = current->getNext();
+        Node* temp = new Node(data);
+        current->setNext(temp);
     }
-    
-    Node* temp = new Node(data);
-    current->setNext(temp);
-  }
 }
 
-void dequeue(Node* current, Node* &head) {
+  void dequeue(Node* current, Node*& head) {
   //Remove front node
-  if (current->getNext() == NULL) {
-    queueHead = NULL;
-    delete current;
-  }
-
-  else if (current->getNext() != NULL) {
-    Node* temp = current->getNext();
-    queueHead = NULL;
-    delete current;
-    queueHead = temp;
-  }
+  // Remove front node
+    if (current->getNext() == nullptr) {
+        head = nullptr;
+        delete current;
+    } else {
+        Node* temp = current->getNext();
+	head = NULL;
+	delete current;
+	head = temp;
+    }
 }
 
 void push(Node* current, Node* data) {
@@ -171,9 +226,9 @@ void push(Node* current, Node* data) {
   if (current == NULL) {
     stackHead = data;
   }
-
   //If id is smaller than head
-  else if (current != NULL) {
+  else {
+    
     while(current->getNext() != NULL) {
       current = current->getNext();
     }
@@ -184,68 +239,58 @@ void push(Node* current, Node* data) {
 
 Node* peek(Node* current) {
   //Return value of last (top) element in list
-  while(current->getNext() != NULL) {
-    current = current->getNext();
+
+  if(current == NULL) {
+    return NULL;
   }
-  return current;
+  while (current->getNext() != NULL) {
+        current = current->getNext();
+    }
+    return current;
 }
 
 void pop(Node* current) {
   //Remove element on top of the stack
 
-  //If there's only 1 value in the stack
-  if (current->getNext() == NULL) {
-    stackHead = NULL;
-    delete current;
-  }
+if (current->getNext() == nullptr) {
+        stackHead = nullptr;
+        delete current;
+    } else {
+        while (current->getNext()->getNext() != nullptr) {
+            current = current->getNext();
+        }
 
-  else {
-    while (current->getNext()->getNext() != NULL) {
-      current = current->getNext();
+        delete current->getNext();
+        current->setNext(nullptr);
     }
-      
-    delete current->getNext();
-    current->setNext(NULL);
-  }
 }
 
 void buildTree(Node* current) {
-  //add all numbers to stack
-  if(isdigit(current->getCharacter())) {
-    Node* now = new Node(current->getCharacter());
-    push(stackHead, now);
-  }
+  // Add all numbers to stack
 
-  else if(!isdigit(current->getCharacter())) {
-    //in stack, set left and right nodes as top nodes
-    Node* now = new Node(current->getCharacter());
-    //create new node for left and right
-    Node* nRight = new Node(peek(stackHead)->getCharacter());
-    nRight->setRight(peek(stackHead)->getRight());
-    nRight->setLeft(peek(stackHead)->getLeft());
-    now->setRight(nRight);
-    pop(stackHead);
-    
-    Node* nLeft = new Node(peek(stackHead)->getCharacter());
-    nLeft->setRight(peek(stackHead)->getRight());
-    nLeft->setLeft(peek(stackHead)->getLeft());
-    now->setLeft(nLeft);
-    pop(stackHead);
-
-    push(stackHead, now);
-  }
+  if (isdigit(current->getData())) {
+        push(stackHead, current);
+    } else if (isOperator(current->getData())) {
+        Node* operatorNode = new Node(current->getData());
+        operatorNode->setRight(peek(stackHead));
+        pop(stackHead);
+        operatorNode->setLeft(peek(stackHead));
+        pop(stackHead);
+        push(stackHead, operatorNode);
+    }
 }
 
 void infix(Node* current) {
   //print original expression
   if(current != NULL) {
-    if (isOperator(current->getCharacter()) == true) {
-      cout << '(' << " ";
+    if (isOperator(current->getData())) {
+      cout << "(" << " ";
     }
+
     infix(current->getLeft());
-    cout << current->getCharacter() << " ";
+    cout << current->getData() << " ";
     infix(current->getRight());
-    if(isOperator(current->getCharacter()) == true) {
+    if (isOperator(current->getData())) {
       cout << ')';
     }
   }
@@ -253,21 +298,18 @@ void infix(Node* current) {
 
 void postfix(Node* current) {
   //print operations after numbers 
-  if (current != NULL) {
-    if(current->getLeft() != NULL) {
-      postfix(current->getLeft());
-    }
-    if (current->getRight() != NULL) {
-      postfix(current->getRight());
-    }
-    cout << current->getCharacter() << " ";
+
+  if(current!= NULL) {
+    postfix(current->getLeft());
+    postfix(current->getRight());
+    cout << current->getData() << " ";
   }
 }
 
 void prefix(Node* current) {
   //print numbers after operations
   if (current != NULL) {
-    cout << current->getCharacter() << " ";
+    cout << current->getData() << " ";
     prefix(current->getLeft());
     prefix(current->getRight());
   }
@@ -275,8 +317,7 @@ void prefix(Node* current) {
 
 //check to see if character is an operation
 bool isOperator(char op){
-  if(op == '^' || op == '*' || op == '/' || op == '+' ||
-     op == '-') {
+  if(op == '^' || op == '*' || op == '/' || op == '+' || op == '-') {
     return true;
   } else {
     return false;
