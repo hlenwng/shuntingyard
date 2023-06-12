@@ -269,14 +269,23 @@ void buildTree(Node* current) {
   // Add all numbers to stack
 
   if (isdigit(current->getData())) {
-        push(stackHead, current);
-    } else if (isOperator(current->getData())) {
-        Node* operatorNode = new Node(current->getData());
-        operatorNode->setRight(peek(stackHead));
+        Node* now = new Node(current->getData());
+        push(stackHead, now);
+    } else if (!isdigit(current->getData())) {
+        Node* now = new Node(current->getData());
+        Node* nRight = new Node(peek(stackHead)->getData());
+        nRight->setRight(peek(stackHead)->getRight());
+        nRight->setLeft(peek(stackHead)->getLeft());
+        now->setRight(nRight);
         pop(stackHead);
-        operatorNode->setLeft(peek(stackHead));
+
+        Node* nLeft = new Node(peek(stackHead)->getData());
+        nLeft->setRight(peek(stackHead)->getRight());
+        nLeft->setLeft(peek(stackHead)->getLeft());
+        now->setLeft(nLeft);
         pop(stackHead);
-        push(stackHead, operatorNode);
+
+        push(stackHead, now);
     }
 }
 
